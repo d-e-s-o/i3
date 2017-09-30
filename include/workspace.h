@@ -214,4 +214,10 @@ Con *workspace_encapsulate(Con *ws);
  * This returns true if and only if moving the workspace was successful.
  *
  */
-bool workspace_move_to_output(Con *ws, Output *output);
+bool workspace_move_to_output(Con *ws, const char *output);
+
+/**
+ * Select the workspace with the given number, automatically creating
+ * workspaces with lower numbers.
+ */
+Con *workspace_select(const char *num);
