@@ -1035,3 +1035,39 @@ void workspace_move_to_output(Con *ws, Output *output) {
         break;
     }
 }
+
+Con *workspace_select(const char *num) {
+    bool created = (get_existing_workspace_by_name(num) == NULL);
+    Con *workspace = workspace_get(num);
+
+    /* If the workspace already exists we simply use it. */
+    if (!created) {
+        return workspace;
+    }
+
+    for (long num = workspace->num - 1; num >= 1 && created; num -= 1) {
+        int result;
+        /* 99 workspaces ought to be enough. */
+        char num_str[3];
+
+        /*
+         * It is very unfortunate that workspace_get works with string
+         * representations of numbers but that's what we have...
+         */
+        result = snprintf(num_str, sizeof(num_str), "%ld", num);
+        if (result >= sizeof(num_str)) {
+            ELOG("Workspace number too big: %ld\n", num);
+            /* Ups, that will make boom somewhere. */
+            return NULL;
+        }
+
+        /*
+         * Note that ideally we would batch create the workspaces here which
+         * would save us all those unnecessary calls to ewmh_update_*. But given
+         * the expected low frequency of those creations we should be fine.
+         */
+        created = (get_existing_workspace_by_name(num_str) == NULL);
+        (void)workspace_get(num_str);
+    }
+    return workspace;
+}
