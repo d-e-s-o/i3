@@ -617,18 +617,17 @@ Con *workspace_next_on_output(void) {
         /* If currently a named workspace, find next named workspace. */
         next = TAILQ_NEXT(current, nodes);
     } else {
-        /* If currently a numbered workspace, find next numbered workspace. */
-        NODES_FOREACH(output_get_content(output)) {
-            if (child->type != CT_WORKSPACE)
-                continue;
-            if (child->num == -1)
-                break;
-            /* Need to check child against current and next because we are
-             * traversing multiple lists and thus are not guaranteed the
-             * relative order between the list of workspaces. */
-            if (current->num < child->num && (!next || child->num < next->num))
-                next = child;
+        int result;
+        char num_str[3];
+        long num = current->num + 1;
+
+        result = snprintf(num_str, sizeof(num_str), "%ld", num);
+        if (result >= sizeof(num_str)) {
+            ELOG("Workspace number too big: %ld\n", num);
+            /* Ups, that will make boom somewhere. */
+            return NULL;
         }
+        next = workspace_get(num_str, NULL);
     }
 
     /* Find next named workspace. */
