@@ -37,6 +37,7 @@ struct i3_ws {
     bool visible;             /* If the ws is currently visible on an output */
     bool focused;             /* If the ws is currently focused */
     bool urgent;              /* If the urgent hint of the ws is set */
+    bool has_children;        /* If the current ws has children (i.e, windows) */
     rect rect;                /* The rect of the ws (not used (yet)) */
     struct i3_output *output; /* The current output of the ws */
 
