@@ -532,45 +532,48 @@ static bool cmd_resize_tiling_width_height(I3_CMD, Con *current, const char *dir
             child->percent = percentage;
     }
 
-    double new_current_percent;
-    double subtract_percent;
-    if (ppt != 0.0) {
-        new_current_percent = current->percent + ppt;
-    } else {
-        new_current_percent = px_resize_to_percent(current, px);
-        ppt = new_current_percent - current->percent;
-    }
-    subtract_percent = ppt / (children - 1);
-    if (ppt < 0.0 && new_current_percent < percent_for_1px(current)) {
-        yerror("Not resizing, container would end with less than 1px");
-        return false;
+    /*
+     * The way our resizing works is always between two cons. If the
+     * current con has a right neighbour we resize relative to it.
+     */
+    Con *next = TAILQ_NEXT(current, nodes);
+    if (next == NULL) {
+        /*
+         * If there is no right neighbour we resize relative to the left
+         * neighbour. That is, we treat the left neighbour as the one
+         * relative to which the resizing happens.
+         */
+        Con *swap = current;
+        current = TAILQ_PREV(current, nodes_head, nodes);
+        if (current == NULL) {
+            LOG("Not resizing\n");
+            ysuccess(false);
+            return false;
+        }
+        next = swap;
     }
 
+    double new_current_percent;
+    double new_next_percent;
+    if (ppt != 0.0) {
+        new_current_percent = current->percent + ppt;
+        new_next_percent = next->percent - ppt;
+    } else {
+        new_current_percent = px_resize_to_percent(current, px);
+        new_next_percent = next->percent + current->percent - new_current_percent;
+    }
     LOG("new_current_percent = %f\n", new_current_percent);
-    LOG("subtract_percent = %f\n", subtract_percent);
-    /* Ensure that the new percentages are positive. */
-    if (subtract_percent >= 0.0) {
-        TAILQ_FOREACH(child, &(current->parent->nodes_head), nodes) {
-            if (child == current) {
-                continue;
-            }
-            if (child->percent - subtract_percent < percent_for_1px(child)) {
-                yerror("Not resizing, already at minimum size (child %p would end up with a size of %.f", child, child->percent - subtract_percent);
-                return false;
-            }
-        }
+
+    if (new_current_percent < percent_for_1px(current) || new_next_percent < percent_for_1px(next)) {
+        LOG("Not resizing, already at minimum size\n");
+        ysuccess(false);
+        return false;
     }
 
     current->percent = new_current_percent;
     LOG("current->percent after = %f\n", current->percent);
 
-    TAILQ_FOREACH(child, &(current->parent->nodes_head), nodes) {
-        if (child == current)
-            continue;
-        child->percent -= subtract_percent;
-        LOG("child->percent after (%p) = %f\n", child, child->percent);
-    }
-
+    next->percent = new_next_percent;
     return true;
 }
 
