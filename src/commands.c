@@ -555,20 +555,34 @@ static bool cmd_resize_tiling_width_height(I3_CMD, Con *current, const char *way
     }
 
     double new_current_percent = current->percent + ((double)ppt / 100.0);
-    double subtract_percent = ((double)ppt / 100.0) / (children - 1);
+    double subtract_percent = (double)ppt / 100.0;
     LOG("new_current_percent = %f\n", new_current_percent);
     LOG("subtract_percent = %f\n", subtract_percent);
-    /* Ensure that the new percentages are positive. */
-    TAILQ_FOREACH(child, &(current->parent->nodes_head), nodes) {
-        if (child == current)
-            continue;
-        if (child->percent - subtract_percent <= 0.0) {
-            LOG("Not resizing, already at minimum size (child %p would end up with a size of %.f\n", child, child->percent - subtract_percent);
+
+    /*
+     * The way our resizing works is always between two cons. If the
+     * current con has a right neighbour we resize relative to it.
+     */
+    Con *next = TAILQ_NEXT(current, nodes);
+    if (next == NULL) {
+        /*
+         * If there is no right neighbour we resize relative to the left
+         * neighbour. That is, we treat the left neighbour as the one
+         * relative to which the resizing happens.
+         */
+        Con *swap = current;
+        current = TAILQ_PREV(current, nodes_head, nodes);
+        if (current == NULL) {
+            LOG("Not resizing\n");
             ysuccess(false);
             return false;
         }
+        next = swap;
     }
-    if (new_current_percent <= 0.0) {
+
+    double new_next_percent = next->percent - subtract_percent;
+
+    if (new_current_percent <= 0.0 || new_next_percent <= 0.0) {
         LOG("Not resizing, already at minimum size\n");
         ysuccess(false);
         return false;
@@ -577,13 +591,7 @@ static bool cmd_resize_tiling_width_height(I3_CMD, Con *current, const char *way
     current->percent = new_current_percent;
     LOG("current->percent after = %f\n", current->percent);
 
-    TAILQ_FOREACH(child, &(current->parent->nodes_head), nodes) {
-        if (child == current)
-            continue;
-        child->percent -= subtract_percent;
-        LOG("child->percent after (%p) = %f\n", child, child->percent);
-    }
-
+    next->percent = new_next_percent;
     return true;
 }
 
