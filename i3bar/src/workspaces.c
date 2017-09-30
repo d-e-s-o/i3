@@ -49,6 +49,12 @@ static int workspaces_boolean_cb(void *params_, int val) {
         return 1;
     }
 
+    if (!strcmp(params->cur_key, "has_children")) {
+        params->workspaces_walk->has_children = val;
+        FREE(params->cur_key);
+        return 1;
+    }
+
     FREE(params->cur_key);
 
     return 0;
@@ -180,6 +186,7 @@ static int workspaces_start_map_cb(void *params_) {
         new_workspace->visible = 0;
         new_workspace->focused = 0;
         new_workspace->urgent = 0;
+        new_workspace->has_children = 0;
         memset(&new_workspace->rect, 0, sizeof(rect));
         new_workspace->output = NULL;
 
