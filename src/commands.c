@@ -362,7 +362,7 @@ void cmd_move_con_to_workspace_name(I3_CMD, const char *name, const char *_no_au
 
     LOG("should move window to workspace %s\n", name);
     /* get the workspace */
-    Con *ws = workspace_get(name, NULL);
+    Con *ws = workspace_select(name);
 
     if (!no_auto_back_and_forth)
         ws = maybe_auto_back_and_forth_workspace(ws);
@@ -925,7 +925,8 @@ void cmd_workspace_number(I3_CMD, const char *which, const char *_no_auto_back_a
     if (!workspace) {
         LOG("There is no workspace with number %ld, creating a new one.\n", parsed_num);
         ysuccess(true);
-        workspace_show_by_name(which);
+        workspace = workspace_select(which);
+        workspace_show(workspace);
         cmd_output->needs_tree_render = true;
         return;
     }
@@ -964,6 +965,7 @@ void cmd_workspace_back_and_forth(I3_CMD) {
  */
 void cmd_workspace_name(I3_CMD, const char *name, const char *_no_auto_back_and_forth) {
     const bool no_auto_back_and_forth = (_no_auto_back_and_forth != NULL);
+    Con *workspace;
 
     if (strncasecmp(name, "__", strlen("__")) == 0) {
         LOG("You cannot switch to the i3-internal workspaces (\"%s\").\n", name);
@@ -982,7 +984,8 @@ void cmd_workspace_name(I3_CMD, const char *name, const char *_no_auto_back_and_
         ysuccess(true);
         return;
     }
-    workspace_show_by_name(name);
+    workspace = workspace_select(name);
+    workspace_show(workspace);
 
     cmd_output->needs_tree_render = true;
     // XXX: default reply for now, make this a better reply

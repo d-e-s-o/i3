@@ -194,3 +194,9 @@ Con *workspace_encapsulate(Con *ws);
  *
  */
 bool workspace_move_to_output(Con *ws, const char *output);
+
+/**
+ * Select the workspace with the given number, automatically creating
+ * workspaces with lower numbers.
+ */
+Con *workspace_select(const char *num);
