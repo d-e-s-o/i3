@@ -420,6 +420,13 @@ void dump_node(yajl_gen gen, Con *con, bool inplace_restart) {
     ystr("urgent");
     y(bool, con->urgent);
 
+    /*
+     * We do not expose the newly introduced 'has_children' property
+     * here. It is only part of the 'get_workspaces' command in an
+     * attempt to not break functionality relying on i3-save-tree or the
+     * like.
+     */
+
     ystr("marks");
     y(array_open);
     mark_t *mark;
@@ -977,6 +984,9 @@ IPC_HANDLER(get_workspaces) {
 
             ystr("urgent");
             y(bool, ws->urgent);
+
+            ystr("has_children");
+            y(bool, con_has_children(ws));
 
             y(map_close);
         }

@@ -48,6 +48,12 @@ static int workspaces_boolean_cb(void *params_, const int val) {
         return 1;
     }
 
+    if (!strcmp(params->cur_key, "has_children")) {
+        params->workspaces_walk->has_children = val;
+        FREE(params->cur_key);
+        return 1;
+    }
+
     FREE(params->cur_key);
 
     return 0;
