@@ -2046,6 +2046,21 @@ void draw_bars(bool unhide) {
                 draw_button(&(outputs_walk->buffer), fg_color, bg_color, border_color,
                             workspace_width, w, ws_walk->name_width, ws_walk->name);
 
+                if (ws_walk->has_children) {
+                    color_t rect_color = draw_util_hex_to_color("#ffffff");
+                    draw_util_rectangle(&(outputs_walk->buffer), rect_color,
+                                        workspace_width + logical_px(1),
+                                        2 * logical_px(1),
+                                        logical_px(6), logical_px(6));
+
+                    if (!ws_walk->visible) {
+                         draw_util_rectangle(&(outputs_walk->buffer), bg_color,
+                                             workspace_width + logical_px(2),
+                                             2 * logical_px(1) + logical_px(1),
+                                             logical_px(4), logical_px(4));
+                    }
+                }
+
                 workspace_width += w;
                 if (TAILQ_NEXT(ws_walk, tailq) != NULL)
                     workspace_width += logical_px(ws_spacing_px);

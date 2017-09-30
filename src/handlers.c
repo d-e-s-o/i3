@@ -264,6 +264,8 @@ static void handle_map_request(xcb_map_request_event_t *event) {
     add_ignore_event(event->sequence, -1);
 
     manage_window(event->window, cookie, false);
+    ipc_send_workspace_event("reload", NULL, NULL);
+    return;
 }
 
 /*
@@ -498,6 +500,7 @@ static void handle_unmap_notify_event(xcb_unmap_notify_event_t *event) {
 
     tree_close_internal(con, DONT_KILL_WINDOW, false);
     tree_render();
+    ipc_send_workspace_event("reload", NULL, NULL);
 
 ignore_end:
     /* If the client (as opposed to i3) destroyed or unmapped a window, an
