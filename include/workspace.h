@@ -73,6 +73,8 @@ bool output_triggers_assignment(Output *output, struct Workspace_Assignment *ass
  */
 Con *workspace_get(const char *num);
 
+Con *workspace_get_on_output(Con *output, const char *num);
+
 /**
  * Extracts workspace names from keybindings (e.g. “web” from “bindsym $mod+1
  * workspace web”), so that when an output needs a workspace, i3 can start with
