@@ -119,8 +119,12 @@ bool output_triggers_assignment(Output *output, struct Workspace_Assignment *ass
  * memory and initializing the data structures correctly).
  *
  */
-Con *workspace_get(const char *num, bool *created) {
-    Con *workspace = get_existing_workspace_by_name(num);
+Con *workspace_get_on_output(Con *output, const char *num, bool *created) {
+    Con *out, *workspace = NULL;
+
+    TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
+    GREP_FIRST(workspace, output_get_content(out), !strcasecmp(child->name, num) &&
+                                                   (output == NULL || con_get_output(child) == output));
 
     if (workspace == NULL) {
         LOG("Creating new workspace \"%s\"\n", num);
@@ -130,9 +134,11 @@ Con *workspace_get(const char *num, bool *created) {
          * -1. */
         long parsed_num = ws_name_to_number(num);
 
-        Con *output = get_assigned_output(num, parsed_num);
+        Con *assigned = get_assigned_output(num, parsed_num);
         /* if an assignment is not found, we create this workspace on the current output */
-        if (!output) {
+        if (assigned) {
+            output = assigned;
+        } else if (!output) {
             output = con_get_output(focused);
         }
 
@@ -169,6 +175,10 @@ Con *workspace_get(const char *num, bool *created) {
     }
 
     return workspace;
+}
+
+Con *workspace_get(const char *num, bool *created) {
+    return workspace_get_on_output(NULL, num, created);
 }
 
 /*
@@ -236,6 +246,7 @@ Con *create_workspace_on_output(Output *output, Con *content) {
     /* add a workspace to this output */
     char *name;
     bool exists = true;
+    Con *out, *current;
     Con *ws = con_new(NULL, NULL);
     ws->type = CT_WORKSPACE;
 
@@ -250,7 +261,11 @@ Con *create_workspace_on_output(Output *output, Con *content) {
             continue;
         }
 
-        exists = (get_existing_workspace_by_name(target_name) != NULL);
+        current = NULL;
+        TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
+        GREP_FIRST(current, output_get_content(out), !strcasecmp(child->name, target_name) &&
+                                                     get_output_for_con(child) == output);
+        exists = (current != NULL);
         if (!exists) {
             ws->name = sstrdup(target_name);
             /* Set ->num to the number of the workspace, if the name actually
@@ -268,8 +283,16 @@ Con *create_workspace_on_output(Output *output, Con *content) {
         int c = 0;
         while (exists) {
             c++;
+
+            ws->num = c;
+
             Con *assigned = get_assigned_output(NULL, c);
-            exists = (get_existing_workspace_by_num(c) || (assigned && assigned != output->con));
+            current = NULL;
+            TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
+            GREP_FIRST(current, output_get_content(out), child->num == ws->num &&
+                                                         get_output_for_con(child) == output);
+            exists = (current != NULL) || (assigned && assigned != output->con);
+
             DLOG("result for ws %d: exists = %d\n", c, exists);
         }
         ws->num = c;
@@ -671,7 +694,7 @@ Con *workspace_next_on_output(void) {
             /* Ups, that will make boom somewhere. */
             return NULL;
         }
-        next = workspace_get(num_str, NULL);
+        next = workspace_get_on_output(output, num_str, NULL);
     }
 
     /* Find next named workspace. */
@@ -1020,7 +1043,8 @@ bool workspace_move_to_output(Con *ws, Output *output) {
 
 Con *workspace_select(const char *num) {
     bool created;
-    Con *workspace = workspace_get(num, &created);
+    Con *output = con_get_output(focused);
+    Con *workspace = workspace_get_on_output(output, num, &created);
 
     /* If the workspace already exists we simply use it. */
     if (!created) {
@@ -1048,7 +1072,7 @@ Con *workspace_select(const char *num) {
          * would save us all those unnecessary calls to ewmh_update_*. But given
          * the expected low frequency of those creations we should be fine.
          */
-        (void)workspace_get(num_str, &created);
+        (void)workspace_get_on_output(output, num_str, &created);
     }
     return workspace;
 }
