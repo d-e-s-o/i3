@@ -45,11 +45,12 @@ static void _workspace_apply_default_orientation(Con *ws) {
  * memory and initializing the data structures correctly).
  *
  */
-Con *workspace_get(const char *num, bool *created) {
-    Con *output, *workspace = NULL;
+Con *workspace_get_on_output(Con *output, const char *num, bool *created) {
+    Con *out, *workspace = NULL;
 
-    TAILQ_FOREACH(output, &(croot->nodes_head), nodes)
-    GREP_FIRST(workspace, output_get_content(output), !strcasecmp(child->name, num));
+    TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
+    GREP_FIRST(workspace, output_get_content(out), !strcasecmp(child->name, num) &&
+                                                   (output == NULL || con_get_output(child) == output));
 
     if (workspace == NULL) {
         LOG("Creating new workspace \"%s\"\n", num);
@@ -107,6 +108,10 @@ Con *workspace_get(const char *num, bool *created) {
     }
 
     return workspace;
+}
+
+Con *workspace_get(const char *num, bool *created) {
+    return workspace_get_on_output(NULL, num, created);
 }
 
 /*
@@ -200,7 +205,8 @@ Con *create_workspace_on_output(Output *output, Con *content) {
 
         current = NULL;
         TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
-        GREP_FIRST(current, output_get_content(out), !strcasecmp(child->name, target_name));
+        GREP_FIRST(current, output_get_content(out), !strcasecmp(child->name, target_name) &&
+                                                     get_output_for_con(child) == output);
         exists = (current != NULL);
         if (!exists) {
             ws->name = sstrdup(target_name);
@@ -224,7 +230,8 @@ Con *create_workspace_on_output(Output *output, Con *content) {
 
             current = NULL;
             TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
-            GREP_FIRST(current, output_get_content(out), child->num == ws->num);
+            GREP_FIRST(current, output_get_content(out), child->num == ws->num &&
+                                                         get_output_for_con(child) == output);
             exists = (current != NULL);
 
             DLOG("result for ws %d: exists = %d\n", c, exists);
@@ -627,7 +634,7 @@ Con *workspace_next_on_output(void) {
             /* Ups, that will make boom somewhere. */
             return NULL;
         }
-        next = workspace_get(num_str, NULL);
+        next = workspace_get_on_output(output, num_str, NULL);
     }
 
     /* Find next named workspace. */
@@ -981,7 +988,8 @@ bool workspace_move_to_output(Con *ws, const char *name) {
 
 Con *workspace_select(const char *num) {
     bool created;
-    Con *workspace = workspace_get(num, &created);
+    Con *output = con_get_output(focused);
+    Con *workspace = workspace_get_on_output(output, num, &created);
 
     /* If the workspace already exists we simply use it. */
     if (!created) {
@@ -1009,7 +1017,7 @@ Con *workspace_select(const char *num) {
          * would save us all those unnecessary calls to ewmh_update_*. But given
          * the expected low frequency of those creations we should be fine.
          */
-        (void)workspace_get(num_str, &created);
+        (void)workspace_get_on_output(output, num_str, &created);
     }
     return workspace;
 }

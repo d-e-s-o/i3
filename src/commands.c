@@ -412,7 +412,8 @@ void cmd_move_con_to_workspace_number(I3_CMD, const char *which, const char *_no
 
     LOG("should move window to workspace %s\n", which);
     /* get the workspace */
-    Con *output, *workspace = NULL;
+    Con *out, *workspace = NULL;
+    Con *output = con_get_output(focused);
 
     long parsed_num = ws_name_to_number(which);
 
@@ -422,12 +423,12 @@ void cmd_move_con_to_workspace_number(I3_CMD, const char *which, const char *_no
         return;
     }
 
-    TAILQ_FOREACH(output, &(croot->nodes_head), nodes)
-    GREP_FIRST(workspace, output_get_content(output),
-               child->num == parsed_num);
+    TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
+    GREP_FIRST(workspace, output_get_content(out),
+               child->num == parsed_num && con_get_output(child) == output);
 
     if (!workspace) {
-        workspace = workspace_get(which, NULL);
+        workspace = workspace_get_on_output(output, which, NULL);
     }
 
     if (!no_auto_back_and_forth)
