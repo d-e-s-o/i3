@@ -71,6 +71,21 @@ static int config_null_cb(void *params_) {
  *
  */
 static int config_string_cb(void *params_, const unsigned char *val, size_t _len) {
+    const char dock[] = "dock";
+    const char hide[] = "hide";
+    const char none[] = "none";
+    const char shift[] = "shift";
+    const char ctrl[] = "ctrl";
+    const char mod[] = "Mod";
+    const char top[] = "top";
+    const size_t dock_len = sizeof(dock) - 1;
+    const size_t hide_len = sizeof(hide) - 1;
+    const size_t none_len = sizeof(none) - 1;
+    const size_t shift_len = sizeof(shift) - 1;
+    const size_t ctrl_len = sizeof(ctrl) - 1;
+    const size_t mod_len = sizeof(mod) - 1;
+    const size_t top_len = sizeof(top) - 1;
+
     int len = (int)_len;
     /* The id and socket_path are ignored, we already know them. */
     if (!strcmp(cur_key, "id") || !strcmp(cur_key, "socket_path"))
@@ -107,34 +122,34 @@ static int config_string_cb(void *params_, const unsigned char *val, size_t _len
 
     if (!strcmp(cur_key, "mode")) {
         DLOG("mode = %.*s, len = %d\n", len, val, len);
-        config.hide_on_modifier = (len == 4 && !strncmp((const char *)val, "dock", strlen("dock")) ? M_DOCK
-                                                                                                   : (len == 4 && !strncmp((const char *)val, "hide", strlen("hide")) ? M_HIDE
-                                                                                                                                                                      : M_INVISIBLE));
+        config.hide_on_modifier = (len == hide_len && !strncmp((const char *)val, dock, dock_len) ? M_DOCK
+                                                                                                  : (len == hide_len && !strncmp((const char *)val, hide, hide_len) ? M_HIDE
+                                                                                                                                                                    : M_INVISIBLE));
         return 1;
     }
 
     if (!strcmp(cur_key, "hidden_state")) {
         DLOG("hidden_state = %.*s, len = %d\n", len, val, len);
-        config.hidden_state = (len == 4 && !strncmp((const char *)val, "hide", strlen("hide")) ? S_HIDE : S_SHOW);
+        config.hidden_state = (len == hide_len && !strncmp((const char *)val, hide, hide_len) ? S_HIDE : S_SHOW);
         return 1;
     }
 
     if (!strcmp(cur_key, "modifier")) {
         DLOG("modifier = %.*s\n", len, val);
-        if (len == 4 && !strncmp((const char *)val, "none", strlen("none"))) {
+        if (len == none_len && !strncmp((const char *)val, none, none_len)) {
             config.modifier = XCB_NONE;
             return 1;
         }
 
-        if (len == 5 && !strncmp((const char *)val, "shift", strlen("shift"))) {
+        if (len == shift_len && !strncmp((const char *)val, shift, shift_len)) {
             config.modifier = ShiftMask;
             return 1;
         }
-        if (len == 4 && !strncmp((const char *)val, "ctrl", strlen("ctrl"))) {
+        if (len == ctrl_len && !strncmp((const char *)val, ctrl, ctrl_len)) {
             config.modifier = ControlMask;
             return 1;
         }
-        if (len == 4 && !strncmp((const char *)val, "Mod", strlen("Mod"))) {
+        if (len == mod_len + 1 && !strncmp((const char *)val, mod, mod_len)) {
             switch (val[3]) {
                 case '1':
                     config.modifier = Mod1Mask;
@@ -179,7 +194,7 @@ static int config_string_cb(void *params_, const unsigned char *val, size_t _len
 
     if (!strcmp(cur_key, "position")) {
         DLOG("position = %.*s\n", len, val);
-        config.position = (len == 3 && !strncmp((const char *)val, "top", strlen("top")) ? POS_TOP : POS_BOT);
+        config.position = (len == top_len && !strncmp((const char *)val, top, top_len) ? POS_TOP : POS_BOT);
         return 1;
     }
 
