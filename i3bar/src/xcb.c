@@ -590,11 +590,17 @@ void handle_button(xcb_button_press_event_t *event) {
         namelen++;
     }
 
-    const size_t len = namelen + strlen("workspace \"\"") + 1;
+    const char cmd_workspace[] = "; workspace \"\"";
+    const char cmd_output[] = "focus output ";
+    const size_t walk_len = strlen(walk->name);
+    const size_t len = sizeof(cmd_output) - 1 + walk_len + namelen + sizeof(cmd_workspace);
     char *buffer = scalloc(len + num_quotes, 1);
-    strncpy(buffer, "workspace \"", strlen("workspace \""));
+
+    strcpy(buffer, cmd_output);
+    strcat(buffer, walk->name);
+    strcat(buffer, cmd_workspace);
     size_t inpos, outpos;
-    for (inpos = 0, outpos = strlen("workspace \"");
+    for (inpos = 0, outpos = len - (namelen + 2);
          inpos < namelen;
          inpos++, outpos++) {
         if (utf8_name[inpos] == '"' || utf8_name[inpos] == '\\') {
