@@ -865,6 +865,7 @@ static void move_content(Con *con) {
     /* 1: Get the con to focus next */
     Con *next = focused;
 
+    int num_children = first_content != NULL ? con_num_children(first_content) : 0;
     /* 2: iterate through workspaces and re-assign them, fixing the coordinates
      * of floating containers as we go */
     const Con *old_content = output_get_content(con);
@@ -879,6 +880,10 @@ static void move_content(Con *con) {
         DLOG("Detaching current = %p / %s\n", current, current->name);
         con_detach(current);
         DLOG("Re-attaching current = %p / %s\n", current, current->name);
+        /* Adjust the con's number to make it be sorted in properly. */
+        current->num = ++num_children;
+        free(current->name);
+        sasprintf(&current->name, "%d", current->num);
         con_attach(current, first_content, false);
         DLOG("Fixing the coordinates of floating containers\n");
         Con *floating_con;
@@ -894,6 +899,7 @@ static void move_content(Con *con) {
         workspace_show(con_get_workspace(next));
     }
 
+    num_children = first_content != NULL ? con_num_children(first_content) : 0;
     /* 3: move the dock clients to the first output */
     Con *child;
     TAILQ_FOREACH (child, &(con->nodes_head), nodes) {
@@ -908,6 +914,10 @@ static void move_content(Con *con) {
             DLOG("Moving dock client %p to nc %p\n", dock, nc);
             con_detach(dock);
             DLOG("Re-attaching\n");
+            /* Adjust the con's number to make it be sorted in properly. */
+            dock->num = ++num_children;
+            free(dock->name);
+            sasprintf(&dock->name, "%d", dock->num);
             con_attach(dock, nc, false);
             DLOG("Done\n");
         }
