@@ -68,7 +68,7 @@ struct Startup_Sequence *startup_sequence_get(const i3Window *cwindow,
  * Returns NULL otherwise.
  *
  */
-char *startup_workspace_for_window(const i3Window *cwindow, xcb_get_property_reply_t *startup_id_reply);
+char *startup_workspace_for_window(const i3Window *cwindow, xcb_get_property_reply_t *startup_id_reply, char **output);
 
 /**
  * Deletes the startup sequence for a window if it exists.
