@@ -193,7 +193,8 @@ void manage_window(xcb_window_t window, xcb_get_window_attributes_cookie_t cooki
 
     xcb_get_property_reply_t *startup_id_reply;
     startup_id_reply = xcb_get_property_reply(conn, startup_id_cookie, NULL);
-    char *startup_ws = startup_workspace_for_window(cwindow, startup_id_reply);
+    char *startup_out;
+    char *startup_ws = startup_workspace_for_window(cwindow, startup_id_reply, &startup_out);
     DLOG("startup workspace = %s\n", startup_ws);
 
     /* Get _NET_WM_DESKTOP if it was set. */
@@ -288,9 +289,14 @@ void manage_window(xcb_window_t window, xcb_get_window_attributes_cookie_t cooki
             else
                 nc = tree_open_con(nc->parent, cwindow);
         } else if (startup_ws) {
+            Output *output;
+            assert(startup_out != NULL);
+            output = get_output_by_name(startup_out, true);
+            assert(output != NULL);
+
             /* If it was started on a specific workspace, we want to open it there. */
             DLOG("Using workspace on which this application was started (%s)\n", startup_ws);
-            nc = con_descend_tiling_focused(workspace_get(startup_ws, NULL));
+            nc = con_descend_tiling_focused(workspace_get_on_output(output->con, startup_ws, NULL));
             DLOG("focused on ws %s: %p / %s\n", startup_ws, nc, nc->name);
             if (nc->type == CT_WORKSPACE)
                 nc = tree_open_con(nc, cwindow);
