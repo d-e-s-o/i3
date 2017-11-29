@@ -36,6 +36,22 @@ __attribute__((__const__)) bool rect_contains(const Rect rect, const uint32_t x,
             y <= (rect.y + rect.height));
 }
 
+bool rect_left_of(Rect r1, Rect r2) {
+    return r1.x < r2.x;
+}
+
+bool rect_right_of(Rect r1, Rect r2) {
+    return r1.x + r1.width > r2.x + r2.width;
+}
+
+bool rect_above_of(Rect r1, Rect r2) {
+    return r1.y < r2.y;
+}
+
+bool rect_below_of(Rect r1, Rect r2) {
+    return r1.y + r1.height > r2.y + r2.height;
+}
+
 __attribute__((__const__)) Rect rect_add(const Rect a, const Rect b) {
     return (Rect){a.x + b.x,
                   a.y + b.y,
