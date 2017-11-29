@@ -586,27 +586,29 @@ static bool _tree_next(Con *con, char way, orientation_t orientation, bool wrap)
     Con *parent = con->parent;
 
     if (con->type == CT_FLOATING_CON) {
-        if (orientation != HORIZ)
-            return false;
-
-        /* left/right focuses the previous/next floating container */
-        Con *next;
-        if (way == 'n')
-            next = TAILQ_NEXT(con, floating_windows);
-        else
-            next = TAILQ_PREV(con, floating_head, floating_windows);
-
-        /* If there is no next/previous container, wrap */
-        if (!next) {
-            if (way == 'n')
-                next = TAILQ_FIRST(&(parent->floating_head));
-            else
-                next = TAILQ_LAST(&(parent->floating_head), floating_head);
+        Con *next = NULL;
+        Con *current;
+        bool (*fn)(Rect, Rect);
+        if (orientation == HORIZ) {
+            fn = (way == 'n') ? rect_right_of : rect_left_of;
+        } else {
+            fn = (way == 'n') ? rect_below_of : rect_above_of;
         }
 
-        /* Still no next/previous container? bail out */
-        if (!next)
-            return false;
+        current = TAILQ_FIRST(&parent->floating_head);
+        while (current != NULL) {
+            if (fn(current->rect, con->rect)) {
+                if (next == NULL || fn(next->rect, current->rect)) {
+                   next = current;
+                }
+            }
+            current = TAILQ_NEXT(current, floating_windows);
+        }
+
+        /* If we did not find a matching con then continue with the
+         * parent (i.e., the workspace). */
+        if (next == NULL)
+            return _tree_next(parent, way, orientation, wrap);
 
         /* Raise the floating window on top of other windows preserving
          * relative stack order */
