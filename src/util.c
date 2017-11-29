@@ -39,6 +39,22 @@ bool rect_contains(Rect rect, uint32_t x, uint32_t y) {
             y <= (rect.y + rect.height));
 }
 
+bool rect_left_of(Rect r1, Rect r2) {
+    return r1.x < r2.x;
+}
+
+bool rect_right_of(Rect r1, Rect r2) {
+    return r1.x + r1.width > r2.x + r2.width;
+}
+
+bool rect_above_of(Rect r1, Rect r2) {
+    return r1.y < r2.y;
+}
+
+bool rect_below_of(Rect r1, Rect r2) {
+    return r1.y + r1.height > r2.y + r2.height;
+}
+
 Rect rect_add(Rect a, Rect b) {
     return (Rect){a.x + b.x,
                   a.y + b.y,
