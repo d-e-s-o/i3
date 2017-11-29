@@ -524,23 +524,33 @@ static Con *get_tree_next(Con *con, direction_t direction) {
 
         Con *const parent = con->parent;
         if (con->type == CT_FLOATING_CON) {
-            if (orientation != HORIZ) {
-                /* up/down does not change floating containers */
-                return NULL;
+            Con *next = NULL;
+            Con *current;
+            bool (*fn)(Rect, Rect);
+            if (orientation == HORIZ) {
+                fn = previous ? rect_left_of : rect_right_of;
+            } else {
+                fn = previous ? rect_above_of : rect_below_of;
             }
 
-            /* left/right focuses the previous/next floating container */
-            Con *next = previous ? TAILQ_PREV(con, floating_head, floating_windows)
-                                 : TAILQ_NEXT(con, floating_windows);
-            /* If there is no next/previous container, wrap */
-            if (!next) {
-                next = previous ? TAILQ_LAST(&(parent->floating_head), floating_head)
-                                : TAILQ_FIRST(&(parent->floating_head));
+            current = TAILQ_FIRST(&parent->floating_head);
+            while (current != NULL) {
+                if (fn(current->rect, con->rect)) {
+                    if (next == NULL || fn(next->rect, current->rect)) {
+                       next = current;
+                    }
+                }
+                current = TAILQ_NEXT(current, floating_windows);
             }
-            /* Our parent does not list us in floating heads? */
-            assert(next);
 
-            return next;
+            if (next) {
+                return next;
+            }
+
+            /* If we did not find a matching con then continue with the
+             * parent (i.e., the workspace). */
+            con = parent;
+            continue;
         }
 
         if (con_num_children(parent) > 1 && con_orientation(parent) == orientation) {
