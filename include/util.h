@@ -65,6 +65,10 @@
 int min(int a, int b);
 int max(int a, int b);
 bool rect_contains(Rect rect, uint32_t x, uint32_t y);
+bool rect_left_of(Rect r1, Rect r2);
+bool rect_right_of(Rect r1, Rect r2);
+bool rect_above_of(Rect r1, Rect r2);
+bool rect_below_of(Rect r1, Rect r2);
 Rect rect_add(Rect a, Rect b);
 Rect rect_sub(Rect a, Rect b);
 
