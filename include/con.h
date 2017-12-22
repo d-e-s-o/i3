@@ -533,3 +533,9 @@ i3String *con_parse_title_format(Con *con);
  *
  */
 bool con_swap(Con *first, Con *second);
+
+/**
+ * Closes workspaces that are empty.
+ *
+ */
+void con_close_empty_workspaces(Con *con);
