@@ -571,3 +571,9 @@ void con_merge_into(Con *old, Con *new);
  *
  */
 bool con_inside_stacked_or_tabbed(Con *con);
+
+/**
+ * Closes workspaces that are empty.
+ *
+ */
+void con_close_empty_workspaces(Con *con);
