@@ -2496,3 +2496,45 @@ swap_end:
 
     return result;
 }
+
+/*
+ * Closes all workspaces that are empty starting from the last non-empty
+ * one or the focused one, whichever is the one further in the back.
+ */
+void con_close_empty_workspaces(Con *con) {
+    if (con->type != CT_WORKSPACE) {
+        Con *child;
+        Con *last_non_empty = TAILQ_FIRST(&(con->nodes_head));
+        /*
+         * Find the last workspace that still has children (or is
+         * focused). We only cleanup workspaces that follow it.
+         */
+        TAILQ_FOREACH(child, &(con->nodes_head), nodes)
+        if (child->type == CT_WORKSPACE &&
+            ((con_num_children(child) > 0) || workspace_is_visible(child))) {
+            last_non_empty = child;
+        }
+
+        for (child = last_non_empty; child != NULL;) {
+            Con *nextchild = TAILQ_NEXT(child, nodes);
+            con_close_empty_workspaces(child);
+            child = nextchild;
+        }
+        return;
+    }
+
+    if (TAILQ_EMPTY(&(con->nodes_head)) && TAILQ_EMPTY(&(con->floating_head))) {
+        /* check if this workspace is currently visible */
+        if (!workspace_is_visible(con)) {
+            yajl_gen gen = ipc_marshal_workspace_event("empty", con, NULL);
+            tree_close_internal(con, DONT_KILL_WINDOW, false, false);
+
+            const unsigned char *payload;
+            ylength length;
+            y(get_buf, &payload, &length);
+            ipc_send_event("workspace", I3_IPC_EVENT_WORKSPACE, (const char *)payload);
+
+            y(free);
+        }
+    }
+}
