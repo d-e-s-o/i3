@@ -548,3 +548,9 @@ uint32_t con_rect_size_in_orientation(Con *con);
  *
  */
 void con_merge_into(Con *old, Con *new);
+
+/**
+ * Closes workspaces that are empty.
+ *
+ */
+void con_close_empty_workspaces(Con *con);
