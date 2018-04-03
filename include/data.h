@@ -387,6 +387,9 @@ struct xoutput {
 
     /** Pointer to the Con which represents this output */
     Con *con;
+    /** The name of the previously focused workspace. Used for back and
+     * forth functionality. */
+    char *prev_ws;
 
     /** x, y, width, height */
     Rect rect;
