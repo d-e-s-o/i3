@@ -720,11 +720,6 @@ void dump_node(yajl_gen gen, Con *con, bool inplace_restart) {
         y(integer, con->depth);
     }
 
-    if (inplace_restart && con->type == CT_ROOT && previous_workspace_name) {
-        ystr("previous_workspace_name");
-        ystr(previous_workspace_name);
-    }
-
     y(map_close);
 }
 
