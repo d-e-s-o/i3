@@ -14,6 +14,7 @@
 /* Stores a copy of the name of the last used workspace for the workspace
  * back-and-forth switching. */
 static char *previous_workspace_name = NULL;
+static char *previous_output = NULL;
 
 /* NULL-terminated list of workspace names (in order) extracted from
  * keybindings. */
@@ -400,9 +401,12 @@ static void _workspace_show(Con *workspace) {
      * focused) are skipped, see bug #868. */
     if (current && !con_is_internal(current)) {
         FREE(previous_workspace_name);
+        FREE(previous_output);
         if (current) {
             previous_workspace_name = sstrdup(current->name);
+            previous_output = sstrdup(con_get_output(current)->name);
             DLOG("Setting previous_workspace_name = %s\n", previous_workspace_name);
+            DLOG("Setting previous_output = %s\n", previous_output);
         }
     }
 
@@ -727,12 +731,17 @@ workspace_prev_on_output_end:
  *
  */
 void workspace_back_and_forth(void) {
+    Con *workspace;
     if (!previous_workspace_name) {
         DLOG("No previous workspace name set. Not switching.\n");
         return;
     }
 
-    workspace_show_by_name(previous_workspace_name);
+    workspace = workspace_back_and_forth_get();
+    if (workspace == NULL) {
+        return;
+    }
+    workspace_show(workspace);
 }
 
 /*
@@ -745,8 +754,11 @@ Con *workspace_back_and_forth_get(void) {
         return NULL;
     }
 
+    Output *output;
     Con *workspace;
-    workspace = workspace_get(previous_workspace_name, NULL);
+
+    output = get_output_by_name(previous_output, true);
+    workspace = workspace_get_on_output(output->con, previous_workspace_name, NULL);
 
     return workspace;
 }
