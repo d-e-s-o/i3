@@ -11,10 +11,6 @@
 #include "all.h"
 #include "yajl_utils.h"
 
-/* Stores a copy of the name of the last used workspace for the workspace
- * back-and-forth switching. */
-static char *previous_workspace_name = NULL;
-
 /* NULL-terminated list of workspace names (in order) extracted from
  * keybindings. */
 static char **binding_workspace_names = NULL;
@@ -399,10 +395,12 @@ static void _workspace_show(Con *workspace) {
      * NOTE: Internal cons such as __i3_scratch (when a scratchpad window is
      * focused) are skipped, see bug #868. */
     if (current && !con_is_internal(current)) {
-        FREE(previous_workspace_name);
-        if (current) {
-            previous_workspace_name = sstrdup(current->name);
-            DLOG("Setting previous_workspace_name = %s\n", previous_workspace_name);
+        Output *output = get_output_for_con(current);
+        /* Only set the previous workspace if we did not change outputs. */
+        if (output == get_output_for_con(workspace)) {
+            FREE(output->prev_ws);
+            output->prev_ws = sstrdup(current->name);
+            DLOG("Setting prev_ws = %s for output = %s\n", output->prev_ws, output_primary_name(output));
         }
     }
 
@@ -727,12 +725,14 @@ workspace_prev_on_output_end:
  *
  */
 void workspace_back_and_forth(void) {
-    if (!previous_workspace_name) {
+    Output *output = get_output_for_con(focused);
+    if (!output->prev_ws) {
         DLOG("No previous workspace name set. Not switching.\n");
         return;
     }
 
-    workspace_show_by_name(previous_workspace_name);
+    Con *workspace = workspace_get_on_output(output->con, output->prev_ws, NULL);
+    workspace_show(workspace);
 }
 
 /*
@@ -740,15 +740,13 @@ void workspace_back_and_forth(void) {
  *
  */
 Con *workspace_back_and_forth_get(void) {
-    if (!previous_workspace_name) {
+    Output *output = get_output_for_con(focused);
+    if (!output->prev_ws) {
         DLOG("No previous workspace name set.\n");
         return NULL;
     }
 
-    Con *workspace;
-    workspace = workspace_get(previous_workspace_name, NULL);
-
-    return workspace;
+    return workspace_get_on_output(output->con, output->prev_ws, NULL);
 }
 
 static bool get_urgency_flag(Con *con) {
