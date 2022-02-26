@@ -625,6 +625,22 @@ static bool randr_query_outputs_15(void) {
                                                     NULL);
 
                 if (info != NULL && info->crtc != XCB_NONE) {
+                    xcb_randr_get_panning_cookie_t cookie;
+                    cookie = xcb_randr_get_panning(conn, info->crtc);
+                    xcb_randr_get_panning_reply_t* panning;
+                    panning = xcb_randr_get_panning_reply(conn, cookie, &err);
+                    if (err != NULL) {
+                      ELOG("Could not get panning randr output panning information: %d\n", err->error_code);
+                      free(err);
+                      continue;
+                    }
+
+                    if (panning->width > 0 || panning->height > 0) {
+                      ELOG("Ignoring monitor and output because output is configured with panning\n");
+                      goto ignore_output;
+                    }
+                    free(panning);
+
                     char *oname;
                     sasprintf(&oname, "%.*s",
                               xcb_randr_get_output_info_name_length(info),
@@ -665,11 +681,12 @@ static bool randr_query_outputs_15(void) {
             update_if_necessary(&(new->rect.width), monitor_info->width) |
             update_if_necessary(&(new->rect.height), monitor_info->height);
 
-        DLOG("name %s, x %d, y %d, width %d px, height %d px, width %d mm, height %d mm, primary %d, automatic %d\n",
+        ELOG("name %s, x %d, y %d, width %d px, height %d px, width %d mm, height %d mm, primary %d, automatic %d\n",
              name,
              monitor_info->x, monitor_info->y, monitor_info->width, monitor_info->height,
              monitor_info->width_in_millimeters, monitor_info->height_in_millimeters,
              monitor_info->primary, monitor_info->automatic);
+ignore_output:
         free(name);
     }
     free(monitors);
