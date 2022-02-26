@@ -987,10 +987,16 @@ void randr_disable_output(Output *output) {
             DLOG("Detaching current = %p / %s\n", current, current->name);
             con_detach(current);
             DLOG("Re-attaching current = %p / %s\n", current, current->name);
-            /* Adjust the con's number to make it be sorted in properly. */
-            current->num = ++num_children;
-            free(current->name);
-            sasprintf(&current->name, "%d", current->num);
+
+            if (first != root_output) {
+              /* Adjust the con's number to make it be sorted in properly. */
+              current->num = ++num_children;
+              free(current->name);
+              sasprintf(&current->name, "%d", current->num);
+              ELOG("NON ROOT OUTPUT! %s\n", first->con->name);
+            } else {
+              ELOG("ROOT OUTPUT!\n");
+            }
             con_attach(current, first_content, false);
             DLOG("Fixing the coordinates of floating containers\n");
             Con *floating_con;
@@ -1023,10 +1029,15 @@ void randr_disable_output(Output *output) {
                 DLOG("Moving dock client %p to nc %p\n", dock, nc);
                 con_detach(dock);
                 DLOG("Re-attaching\n");
-                /* Adjust the con's number to make it be sorted in properly. */
-                dock->num = ++num_children;
-                free(dock->name);
-                sasprintf(&dock->name, "%d", current->num);
+                if (first != root_output) {
+                  /* Adjust the con's number to make it be sorted in properly. */
+                  dock->num = ++num_children;
+                  free(dock->name);
+                  sasprintf(&dock->name, "%d", current->num);
+                  ELOG("NON ROOT OUTPUT! %s\n", first->con->name);
+                } else {
+                  ELOG("ROOT OUTPUT!\n");
+                }
                 con_attach(dock, nc, false);
                 DLOG("Done\n");
             }
