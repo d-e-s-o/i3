@@ -117,6 +117,9 @@ bool output_triggers_assignment(Output *output, struct Workspace_Assignment *ass
  */
 Con *workspace_get_on_output(Con *output, const char *num, bool *created) {
     Con *out, *workspace = NULL;
+    long parsed_num = ws_name_to_number(num);
+    char num_str[3];
+    num = parsed_num != -1 ? num_to_base36(parsed_num, num_str, sizeof(num_str)) : num;
 
     TAILQ_FOREACH(out, &(croot->nodes_head), nodes)
     GREP_FIRST(workspace, output_get_content(out), !strcasecmp(child->name, num) &&
@@ -124,11 +127,6 @@ Con *workspace_get_on_output(Con *output, const char *num, bool *created) {
 
     if (workspace == NULL) {
         LOG("Creating new workspace \"%s\"\n", num);
-
-        /* We set workspace->num to the number if this workspace’s name begins
-         * with a positive number. Otherwise it’s a named ws and num will be
-         * -1. */
-        long parsed_num = ws_name_to_number(num);
 
         Con *assigned = get_assigned_output(num, parsed_num);
         /* if an assignment is not found, we create this workspace on the current output */
@@ -682,12 +680,12 @@ Con *workspace_next_on_output(void) {
         /* If currently a named workspace, find next named workspace. */
         next = TAILQ_NEXT(current, nodes);
     } else {
-        int result;
+        char *result;
         char num_str[3];
         long num = current->num + 1;
 
-        result = snprintf(num_str, sizeof(num_str), "%ld", num);
-        if (result >= sizeof(num_str)) {
+        result = num_to_base36(num, num_str, sizeof(num_str));
+        if (result == NULL) {
             ELOG("Workspace number too big: %ld\n", num);
             /* Ups, that will make boom somewhere. */
             return NULL;
@@ -1056,16 +1054,15 @@ Con *workspace_select(const char *num) {
     }
 
     for (long num = workspace->num - 1; num >= 1 && created; num -= 1) {
-        int result;
-        /* 99 workspaces ought to be enough. */
+        char *result;
         char num_str[3];
 
         /*
          * It is very unfortunate that workspace_get works with string
          * representations of numbers but that's what we have...
          */
-        result = snprintf(num_str, sizeof(num_str), "%ld", num);
-        if (result >= sizeof(num_str)) {
+        result = num_to_base36(num, num_str, sizeof(num_str));
+        if (result == NULL) {
             ELOG("Workspace number too big: %ld\n", num);
             /* Ups, that will make boom somewhere. */
             return NULL;

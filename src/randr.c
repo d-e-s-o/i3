@@ -956,6 +956,7 @@ void randr_disable_output(Output *output) {
          * of floating containers as we go */
         Con *current;
         Con *old_content = output_get_content(output->con);
+        char num_str[3];
         while (!TAILQ_EMPTY(&(old_content->nodes_head))) {
             current = TAILQ_FIRST(&(old_content->nodes_head));
             DLOG("Detaching current = %p / %s\n", current, current->name);
@@ -964,7 +965,7 @@ void randr_disable_output(Output *output) {
             /* Adjust the con's number to make it be sorted in properly. */
             current->num = ++num_children;
             free(current->name);
-            sasprintf(&current->name, "%d", current->num);
+            current->name = strdup(num_to_base36(current->num, num_str, sizeof(num_str)));
             con_attach(current, first_content, false);
             DLOG("Fixing the coordinates of floating containers\n");
             Con *floating_con;

@@ -2421,7 +2421,7 @@ void con_close_empty_workspaces(Con *con) {
         /* check if this workspace is currently visible */
         if (!workspace_is_visible(con)) {
             yajl_gen gen = ipc_marshal_workspace_event("empty", con, NULL);
-            tree_close_internal(con, DONT_KILL_WINDOW, false, false);
+            tree_close_internal(con, DONT_KILL_WINDOW, false);
 
             const unsigned char *payload;
             ylength length;
