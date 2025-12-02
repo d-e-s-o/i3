@@ -869,6 +869,7 @@ static void move_content(Con *con) {
     /* 2: iterate through workspaces and re-assign them, fixing the coordinates
      * of floating containers as we go */
     const Con *old_content = output_get_content(con);
+    char num_str[3];
     while (!TAILQ_EMPTY(&(old_content->nodes_head))) {
         Con *current = TAILQ_FIRST(&(old_content->nodes_head));
         DLOG("Detaching current = %p / %s\n", current, current->name);
@@ -877,7 +878,7 @@ static void move_content(Con *con) {
         /* Adjust the con's number to make it be sorted in properly. */
         current->num = ++num_children;
         free(current->name);
-        sasprintf(&current->name, "%d", current->num);
+        current->name = strdup(num_to_base36(current->num, num_str, sizeof(num_str)));
         con_attach(current, first_content, false);
         DLOG("Fixing the coordinates of floating containers\n");
         Con *floating_con;
@@ -911,7 +912,7 @@ static void move_content(Con *con) {
             /* Adjust the con's number to make it be sorted in properly. */
             dock->num = ++num_children;
             free(dock->name);
-            sasprintf(&dock->name, "%d", dock->num);
+            dock->name = strdup(num_to_base36(dock->num, num_str, sizeof(num_str)));
             con_attach(dock, nc, false);
             DLOG("Done\n");
         }
