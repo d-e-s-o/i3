@@ -76,7 +76,7 @@ Rect rect_sub(Rect a, Rect b) {
 __attribute__((pure)) bool name_is_digits(const char *name) {
     /* positive integers and zero are interpreted as numbers */
     for (size_t i = 0; i < strlen(name); i++)
-        if (!isdigit(name[i]))
+        if (!isalnum(name[i]))
             return false;
 
     return true;
@@ -118,7 +118,7 @@ bool layout_from_name(const char *layout_str, layout_t *out) {
 long ws_name_to_number(const char *name) {
     /* positive integers and zero are interpreted as numbers */
     char *endptr = NULL;
-    long parsed_num = strtol(name, &endptr, 10);
+    long parsed_num = strtol(name, &endptr, 36);
     if (parsed_num == LONG_MIN ||
         parsed_num == LONG_MAX ||
         parsed_num < 0 ||
@@ -127,6 +127,44 @@ long ws_name_to_number(const char *name) {
     }
 
     return parsed_num;
+}
+
+char *num_to_base36(unsigned long value, char *buf, size_t bufsize) {
+    static const char digits[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    char tmp[64];     /* temporary reverse buffer */
+    int pos = 0;
+
+    if (bufsize == 0)
+        return NULL;  /* no space at all */
+
+    /* Special case for zero */
+    if (value == 0) {
+        if (bufsize < 2)
+            return NULL;  /* not enough space */
+        buf[0] = '0';
+        buf[1] = '\0';
+        return buf;
+    }
+
+    /* Convert to base 36 (in reverse order) */
+    while (value > 0) {
+        tmp[pos++] = digits[value % 36];
+        value /= 36;
+        if (pos >= (int)sizeof(tmp))
+            return NULL;  /* shouldn't happen, but safe */
+    }
+
+    /* Check storage space */
+    if (bufsize <= (size_t)pos)
+        return NULL;
+
+    /* Reverse into output buffer */
+    for (int i = 0; i < pos; i++) {
+        buf[i] = tmp[pos - 1 - i];
+    }
+    buf[pos] = '\0';
+
+    return buf;
 }
 
 /*
