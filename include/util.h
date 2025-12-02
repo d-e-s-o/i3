@@ -92,6 +92,7 @@ bool layout_from_name(const char *layout_str, layout_t *out);
  *
  */
 long ws_name_to_number(const char *name);
+char *num_to_base36(unsigned long value, char *buf, size_t bufsize);
 
 /**
  * Updates *destination with new_value and returns true if it was changed or false
