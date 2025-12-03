@@ -996,7 +996,7 @@ Con *workspace_select(const char *num) {
         return workspace;
     }
 
-    for (long num = workspace->num - 1; num >= 1 && created; num -= 1) {
+    for (long num = workspace->num - 1; num >= 0 && created; num -= 1) {
         char *result;
         char num_str[3];
 
